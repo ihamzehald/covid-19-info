@@ -1,5 +1,6 @@
 {
     "name": "root/covid-19-info",
+    "description": "Covid-19 Data and Information",
     "require": {
         "paquettg/php-html-parser": "^2.2",
         "facebook/graph-sdk": "^5.7"
