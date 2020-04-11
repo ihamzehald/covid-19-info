@@ -14,6 +14,9 @@ $fb = new \Facebook\Facebook([
 $pageAccessToken = "fb_page_access_token";
 $pageId = 'fb_page_id';
 
+// the actual length limit is (68727) but to allow post titles such as (Part 1) it's made 68650
+$fbPostChunkLength = 63100;
+$fbPostChunkSeparator = "~!@#$%^&*";
 $data['picture'] = "";
 $data['link'] = "";
 $data['caption'] = "";
@@ -48,15 +51,47 @@ foreach($rows as $row){
     $colsCount++;
 }
 
-$data['message'] = $fbPostString;
+$fbPostChunksString = chunk_split($fbPostString, $fbPostChunkLength, $fbPostChunkSeparator);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $post_url);
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-$return = curl_exec($ch);
-curl_close($ch);
+$fbPostChunks = explode($fbPostChunkSeparator, $fbPostChunksString);
 
-echo $return;
+
+if(count($fbPostChunks) > 1){
+    foreach($fbPostChunks as $index => $fbPostChunk){
+        if(!empty($fbPostChunk)){
+            $partCount = $index + 1;
+            $fbPostChunkTitle = "Part ({$partCount}) : \n";
+            $fbPostStringFinal = $fbPostChunkTitle . $fbPostChunk;
+            $data['message'] = $fbPostStringFinal;
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $post_url);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $return = curl_exec($ch);
+            curl_close($ch);
+
+            echo $return . "\n";
+        }
+    }
+}else{
+        $fbPostStringFinal = $fbPostChunks[0];
+        $data['message'] = $fbPostStringFinal;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $post_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $return = curl_exec($ch);
+        curl_close($ch);
+
+        echo $return . "\n";
+}
+
+
+
+
+
 
